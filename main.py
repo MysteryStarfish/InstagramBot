@@ -12,6 +12,8 @@ PASSWORD = os.getenv("PASSWORD")
 author_id = '65051551192'
 auto_reply_ids = ['65206241525']
 
+random_reply_messages = ["確實", "真的欸", "有料", "要", "超好笑", "笑死", "嗯嗯", "喔不", "哇嘞"]
+
 cl = Client()
 cl.login(USERNAME, PASSWORD)
 
@@ -24,17 +26,15 @@ def get_latest_message(cl):
     return current_message
 
 def get_random_message():
-    messages = ["確實", "真的欸", "有料", "要", "超好笑", "笑死", "嗯嗯", "喔不", "哇嘞"]
-    message = random.choice(messages)
+    message = random.choice(random_reply_messages)
     return message
     
-while True:
-    sleep(1)
+def update():
     current_message = get_latest_message(cl)
     if current_message == pre_message:
-        continue
+        return
     elif current_message.user_id not in auto_reply_ids:
-        continue
+        return
 
     if current_message.user_id == author_id:
         if current_message.text.startswith("add"):
@@ -47,7 +47,7 @@ while True:
             user_id = cl.user_id_from_username(user_name)
             auto_reply_ids.remove(user_id)
             cl.direct_send(f"已移除 {user_name} 從敷衍區", user_ids = [author_id])
-        continue
+        return
 
     pre_message = current_message
     print("New message: ", current_message.text)
@@ -57,3 +57,8 @@ while True:
     print("Reply with: ", reply_message)
 
     print()
+
+while True:
+    update()
+    sleep(1)
+    
