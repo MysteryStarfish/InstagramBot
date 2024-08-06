@@ -42,11 +42,46 @@ def update():
             user_id = cl.user_id_from_username(user_name)
             auto_reply_ids.append(user_id)
             cl.direct_send(f"已新增 {user_name} 至敷衍區", user_ids = [author_id])
+            print(auto_reply_ids)
+            print()
+
         elif current_message.text.startswith("remove"):
             user_name = current_message.text.split()[1]
             user_id = cl.user_id_from_username(user_name)
             auto_reply_ids.remove(user_id)
             cl.direct_send(f"已移除 {user_name} 從敷衍區", user_ids = [author_id])
+            print(auto_reply_ids)
+            print()
+
+        elif current_message.text.startswith("add_random"):
+            reply_message = current_message.text.split(" ", 1)[1]
+            random_reply_messages.append(reply_message)
+            cl.direct_send(f"已新增回覆: {reply_message}", user_ids = [author_id])
+            print(random_reply_messages)
+            print()
+
+        elif current_message.text.startswith("remove_random"):
+            reply_message = current_message.text.split(" ", 1)[1]
+            random_reply_messages.remove(reply_message)
+            cl.direct_send(f"已移除回覆: {reply_message}", user_ids = [author_id])
+            print(random_reply_messages)
+            print()
+        
+        elif current_message.text.startswith("reply"):
+            reply_message = current_message.text.split(" ", 1)[1]
+            user_id = pre_message.user_id
+            if "id" in reply_message: 
+                reply_message = reply_message.split("id")[0]
+                user_id = int(reply_message.split("id")[1])
+            cl.direct_send(reply_message, user_ids = [user_id])
+            print("Reply with: ", reply_message)
+            print()
+
+        elif current_message.text.startswith("global_reply"):
+            reply_message = current_message.text.split(" ", 1)[1]
+            cl.direct_send(reply_message, user_ids = auto_reply_ids)
+            print("Reply with: ", reply_message)
+
         return
 
     pre_message = current_message
