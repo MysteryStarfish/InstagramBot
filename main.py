@@ -1,9 +1,7 @@
 import os
 from time import sleep
-from typing import Dict, List
 import random
 
-import instagrapi
 from instagrapi import Client
 
 import dotenv
