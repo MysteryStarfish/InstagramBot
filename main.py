@@ -75,14 +75,14 @@ def command(current_message):
     elif current_message.text.startswith("reply"):
         user_name, reply_message = process_reply_message(current_message)
 
-        send_message_to_author(f"已回覆:\n {reply_message} \n給:\n {user_name}")
+        send_message_to_author(f"已傳送:\n{reply_message}\n給:\n{user_name}")
         print("Reply with: ", reply_message)
         print()
 
     elif current_message.text.startswith("global_reply"):
         reply_message = broadcast_reply_message(current_message)
 
-        send_message_to_author(f"廣播訊息:\n {reply_message} \n給: {"、\n".join([cl.username_from_user_id(i) for i in auto_reply_ids])}")
+        send_message_to_author(f"廣播訊息:\n{reply_message}\n給:{"、\n".join([cl.username_from_user_id(i) for i in auto_reply_ids])}")
         print("Reply with: ", reply_message, "to: ", [cl.username_from_user_id(i) for i in auto_reply_ids])
         
     elif current_message.text.startswith("stop"):
@@ -172,10 +172,61 @@ def main(current_message):
     pre_message = current_message
     print("New message: ", current_message.text)
 
-    reply_message = get_random_message()
-    cl.direct_send(reply_message, user_ids = [current_message.user_id])
+    reply_message = get_auto_reply_message(current_message.text, current_message.user_id)
+    if not reply_message: return
+    send_message_to_user(reply_message, current_message.user_id)
     print("Reply with: ", reply_message)
 
+def get_auto_reply_message(message, user_id):
+    _msg = message
+    ask = ["會", "可以", "要", "能", "應該", "該","好笑", "好", "是", "對", "有趣", "有", "真的", "知道", "可愛", "喜歡", "討厭"]
+    _a = ["True" if i in _msg else "" for i in ask]
+    no = random.randint(0, 1)
+    no = "不" if no else ""
+    end = random.choice(["", "啦", "~", "吧", "(X)", "耶", "欸", "咩"])
+
+    func = ["+", "-", "*", "/", "(", ")"]
+    _b = ["True" if i in _msg else "" for i in func]
+    str_num = [str(i) for i in range(10)]
+
+    if _msg == "你是誰":
+        send_message_to_user("...", user_id)
+        sleep(2)
+        return "我...我才沒有被盜帳呢"
+    elif _msg == "我是誰":
+        send_message_to_user("...", user_id)
+        sleep(2)
+        return "問你啊"
+    
+    if any(_a):
+        content = no + ask[_a.index("True")] + end
+    elif "的" in _msg or "得" in _msg:
+        keyWord = "得" if "得" in _msg else "的"
+        content = _msg[_msg.index(keyWord) - 1] + random.choice([keyWord, "不"]) + _msg[_msg.index(keyWord) + 1] + end
+    elif "嗎" in _msg:
+        content = no + _msg[_msg.index("嗎") - 1] + end
+    else:
+        content = get_random_message()
+
+    if any(_b):
+        start = ""
+        end = ""
+        start_index = _msg.index(func[_b.index("True")])
+        end_index = _msg.index(func[_b.index("True")])
+        while start_index >= 0:
+            if not (_msg[start_index] in func or _msg[start_index] in str_num):
+                break
+            start += _msg[start_index]
+            start_index -= 1
+        while end_index < len(_msg):
+            if not (_msg[end_index] in func or _msg[end_index] in str_num):
+                break
+            end += _msg[end_index]
+            end_index += 1
+        content = start[::-1] + end[1:]
+        content = str(eval(content))
+    
+    return content
 
 def get_random_message():
     message = random.choice(random_reply_messages)
