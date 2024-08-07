@@ -30,59 +30,63 @@ def update():
     current_message = get_latest_message(cl)
     if current_message == pre_message:
         return
+    elif current_message.user_id == author_id:
+        pass
     elif current_message.user_id not in auto_reply_ids:
         return
 
     if current_message.user_id == author_id:
-        if current_message.text.startswith("add_user"):
-            user_name = add_user_to_auto_reply(current_message)
-
-            send_message_to_author(f"已新增 {user_name} 至敷衍區")
-            print(auto_reply_ids)
-            print()
-
-        elif current_message.text.startswith("remove_user"):
-            user_name = remove_user_from_auto_reply(current_message)
-
-            send_message_to_author(f"已移除 {user_name} 從敷衍區")
-            print(auto_reply_ids)
-            print()
-
-        elif current_message.text.startswith("add_random"):
-            reply_message = add_random_reply_message(current_message)
-
-            send_message_to_author(f"已新增回覆: {reply_message}")
-            print(random_reply_messages)
-            print()
-
-        elif current_message.text.startswith("remove_random"):
-            reply_message = remove_random_reply_message(current_message)
-
-            send_message_to_author(f"已移除回覆: {reply_message}")
-            print(random_reply_messages)
-            print()
-        
-        elif current_message.text.startswith("reply"):
-            user_name, reply_message = process_reply_message(current_message)
-
-            send_message_to_author(f"已回覆:\n {reply_message} \n給:\n {user_name}")
-            print("Reply with: ", reply_message)
-            print()
-
-        elif current_message.text.startswith("global_reply"):
-            reply_message = broadcast_reply_message(current_message)
-
-            send_message_to_author(f"廣播訊息:\n {reply_message} \n給: {"、\n".join([cl.username_from_user_id(i) for i in auto_reply_ids])}")
-            print("Reply with: ", reply_message, "to: ", [cl.username_from_user_id(i) for i in auto_reply_ids])
-        
-        elif current_message.text.startswith("stop"):
-            pause_service(current_message)
-
+        command(current_message)
         return
 
     main(current_message)
 
     print()
+
+def command(current_message):
+    if current_message.text.startswith("add_user"):
+        user_name = add_user_to_auto_reply(current_message)
+
+        send_message_to_author(f"已新增 {user_name} 至敷衍區")
+        print(auto_reply_ids)
+        print()
+
+    elif current_message.text.startswith("remove_user"):
+        user_name = remove_user_from_auto_reply(current_message)
+
+        send_message_to_author(f"已移除 {user_name} 從敷衍區")
+        print(auto_reply_ids)
+        print()
+
+    elif current_message.text.startswith("add_random"):
+        reply_message = add_random_reply_message(current_message)
+
+        send_message_to_author(f"已新增回覆: {reply_message}")
+        print(random_reply_messages)
+        print()
+
+    elif current_message.text.startswith("remove_random"):
+        reply_message = remove_random_reply_message(current_message)
+
+        send_message_to_author(f"已移除回覆: {reply_message}")
+        print(random_reply_messages)
+        print()
+        
+    elif current_message.text.startswith("reply"):
+        user_name, reply_message = process_reply_message(current_message)
+
+        send_message_to_author(f"已回覆:\n {reply_message} \n給:\n {user_name}")
+        print("Reply with: ", reply_message)
+        print()
+
+    elif current_message.text.startswith("global_reply"):
+        reply_message = broadcast_reply_message(current_message)
+
+        send_message_to_author(f"廣播訊息:\n {reply_message} \n給: {"、\n".join([cl.username_from_user_id(i) for i in auto_reply_ids])}")
+        print("Reply with: ", reply_message, "to: ", [cl.username_from_user_id(i) for i in auto_reply_ids])
+        
+    elif current_message.text.startswith("stop"):
+        pause_service(current_message)
 
 def get_latest_message(cl):
     thread = cl.direct_threads(1)[0]
