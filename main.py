@@ -10,10 +10,13 @@ dotenv.load_dotenv(".env")
 USERNAME = os.getenv("USER_NAME")
 PASSWORD = os.getenv("PASSWORD")
 
-author_id = '65051551192'
-auto_reply_ids = ['65206241525', author_id]
+with open("data.json", "r") as f:
+    data = json.load(f)
 
-random_reply_messages = ["確實", "真的欸", "有料", "要", "超好笑", "笑死", "嗯嗯", "喔不", "哇嘞"]
+author_id = '65051551192'
+auto_reply_ids = data['auto_reply_ids']
+
+random_reply_messages = data['random_reply_messages']
 
 cl = Client()
 cl.login(USERNAME, PASSWORD)
@@ -21,17 +24,9 @@ cl.login(USERNAME, PASSWORD)
 thread = cl.direct_threads(1)[0]
 pre_message = thread.messages[0]
 
-def get_latest_message(cl):
-    thread = cl.direct_threads(1)[0]
-    current_message = thread.messages[0]
-    return current_message
-
-def get_random_message():
-    message = random.choice(random_reply_messages)
-    return message
-    
 def update():
     global pre_message
+    
     current_message = get_latest_message(cl)
     if current_message == pre_message:
         return
@@ -40,63 +35,135 @@ def update():
 
     if current_message.user_id == author_id:
         if current_message.text.startswith("add_user"):
-            user_name = current_message.text.split()[1]
-            user_id = cl.user_id_from_username(user_name)
-            auto_reply_ids.append(user_id)
-            cl.direct_send(f"已新增 {user_name} 至敷衍區", user_ids = [author_id])
+            user_name = add_user_to_auto_reply(current_message)
+
+            send_message_to_author(f"已新增 {user_name} 至敷衍區")
             print(auto_reply_ids)
             print()
 
         elif current_message.text.startswith("remove_user"):
-            user_name = current_message.text.split()[1]
-            user_id = cl.user_id_from_username(user_name)
-            auto_reply_ids.remove(user_id)
-            cl.direct_send(f"已移除 {user_name} 從敷衍區", user_ids = [author_id])
+            user_name = remove_user_from_auto_reply(current_message)
+
+            send_message_to_author(f"已移除 {user_name} 從敷衍區")
             print(auto_reply_ids)
             print()
 
         elif current_message.text.startswith("add_random"):
-            reply_message = current_message.text.split(" ", 1)[1]
-            random_reply_messages.append(reply_message)
-            cl.direct_send(f"已新增回覆: {reply_message}", user_ids = [author_id])
+            reply_message = add_random_reply_message(current_message)
+
+            send_message_to_author(f"已新增回覆: {reply_message}")
             print(random_reply_messages)
             print()
 
         elif current_message.text.startswith("remove_random"):
-            reply_message = current_message.text.split(" ", 1)[1]
-            random_reply_messages.remove(reply_message)
-            cl.direct_send(f"已移除回覆: {reply_message}", user_ids = [author_id])
+            reply_message = remove_random_reply_message(current_message)
+
+            send_message_to_author(f"已移除回覆: {reply_message}")
             print(random_reply_messages)
             print()
         
         elif current_message.text.startswith("reply"):
-            user_name = current_message.text.split(" ", 2)[1]
-            reply_message = current_message.text.split(" ", 2)[2]
-            user_id = cl.user_id_from_username(user_name)
-            if "id" in reply_message: 
-                reply_message = reply_message.split("id")[0]
-                user_id = int(reply_message.split("id")[1])
-            cl.direct_send(reply_message, user_ids = [user_id])
-            cl.direct_send(f"回復訊息: {reply_message} 給 {user_name}", user_ids = [author_id])
+            user_name, reply_message = process_reply_message(current_message)
+
+            send_message_to_author(f"已回覆:\n {reply_message} \n給:\n {user_name}")
             print("Reply with: ", reply_message)
             print()
 
         elif current_message.text.startswith("global_reply"):
-            reply_message = current_message.text.split(" ", 1)[1]
-            cl.direct_send(f"廣播訊息: {reply_message} 給 {"、".join([cl.username_from_user_id(i) for i in auto_reply_ids])}", user_ids = [author_id])
-            cl.direct_send(reply_message, user_ids = auto_reply_ids)
+            reply_message = broadcast_reply_message(current_message)
+
+            send_message_to_author(f"廣播訊息:\n {reply_message} \n給: {"、\n".join([cl.username_from_user_id(i) for i in auto_reply_ids])}")
             print("Reply with: ", reply_message, "to: ", [cl.username_from_user_id(i) for i in auto_reply_ids])
         
         elif current_message.text.startswith("stop"):
-            try:
-                delay_time = int(current_message.text.split(" ", 1)[1])
-            except:
-                delay_time = 30
-            cl.direct_send(f"服務將暫停: {delay_time} 秒", user_ids = [author_id])
-            print("Stop: ", delay_time)
-            sleep(delay_time)
+            pause_service(current_message)
 
         return
+
+    main(current_message)
+
+    print()
+
+def get_latest_message(cl):
+    thread = cl.direct_threads(1)[0]
+    current_message = thread.messages[0]
+    return current_message
+
+def add_user_to_auto_reply(current_message):
+    user_name = current_message.text.split()[1]
+    user_id = get_user_id_from_username(user_name)
+    auto_reply_ids.append(user_id)
+    save_data()
+    return user_name
+
+def remove_user_from_auto_reply(current_message):
+    user_name = current_message.text.split()[1]
+    user_id = get_user_id_from_username(user_name)
+    auto_reply_ids.remove(user_id)
+    save_data()
+    return user_name
+
+def get_user_id_from_username(user_name):
+    user_id = cl.user_id_from_username(user_name)
+    return user_id
+
+def add_random_reply_message(current_message):
+    reply_message = current_message.text.split(" ", 1)[1]
+    random_reply_messages.append(reply_message)
+    save_data()
+    return reply_message
+
+def remove_random_reply_message(current_message):
+    reply_message = current_message.text.split(" ", 1)[1]
+    random_reply_messages.remove(reply_message)
+    save_data()
+    return reply_message
+
+def process_reply_message(current_message):
+    user_name = current_message.text.split(" ", 2)[1]
+    reply_message = current_message.text.split(" ", 2)[2]
+    user_id = get_user_id_from_username(user_name)
+    if "id" in reply_message: 
+        reply_message = reply_message.split("id")[0]
+        user_id = int(reply_message.split("id")[1])
+    send_message_to_user(reply_message, user_id)
+    return user_name,reply_message
+
+def broadcast_reply_message(current_message):
+    reply_message = current_message.text.split(" ", 1)[1]
+    send_message_to_all_user(reply_message)
+    return reply_message
+
+def pause_service(current_message):
+    try:
+        delay_time = int(current_message.text.split(" ", 1)[1])
+    except:
+        delay_time = 30
+
+    send_message_to_author(f"服務將暫停: {delay_time} 秒")
+    print("Pause: ", delay_time)
+    sleep(delay_time)
+    send_message_to_author("服務已恢復")
+    print("Resume")
+
+def send_message_to_author(message):
+    cl.direct_send(message, user_ids = [author_id])
+
+def send_message_to_user(message, user_id):
+    cl.direct_send(message, user_ids = [user_id])
+
+def send_message_to_all_user(message):
+    cl.direct_send(message, user_ids = auto_reply_ids)
+    
+def save_data():
+    data['auto_reply_ids'] = auto_reply_ids
+    data['random_reply_messages'] = random_reply_messages
+    with open("data.json", "w") as f:
+        json.dump(data, f)
+
+
+def main(current_message):
+    global pre_message
 
     pre_message = current_message
     print("New message: ", current_message.text)
@@ -105,10 +172,12 @@ def update():
     cl.direct_send(reply_message, user_ids = [current_message.user_id])
     print("Reply with: ", reply_message)
 
-    print()
+
+def get_random_message():
+    message = random.choice(random_reply_messages)
+    return message
 
 print("Link Start")
 while True:
     update()
     sleep(0.5)
-    
