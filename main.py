@@ -173,7 +173,6 @@ def main(current_message):
     print("New message: ", current_message.text)
 
     reply_message = get_auto_reply_message(current_message.text, current_message.user_id)
-    if not reply_message: return
     send_message_to_user(reply_message, current_message.user_id)
     print("Reply with: ", reply_message)
 
