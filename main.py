@@ -10,7 +10,7 @@ dotenv.load_dotenv(".env")
 USERNAME = os.getenv("USER_NAME")
 PASSWORD = os.getenv("PASSWORD")
 
-with open("data.json", "r") as f:
+with open("data.json", "r", encoding="utf-8") as f:
     data = json.load(f)
 
 author_id = '65051551192'
@@ -158,7 +158,7 @@ def send_message_to_all_user(message):
 def save_data():
     data['auto_reply_ids'] = auto_reply_ids
     data['random_reply_messages'] = random_reply_messages
-    with open("data.json", "w") as f:
+    with open("data.json", "w", encoding="utf-8") as f:
         json.dump(data, f)
 
 
