@@ -1,6 +1,7 @@
 import os
 from time import sleep
 import random
+import json
 from instagrapi import Client
 import dotenv
 
@@ -10,7 +11,7 @@ USERNAME = os.getenv("USER_NAME")
 PASSWORD = os.getenv("PASSWORD")
 
 author_id = '65051551192'
-auto_reply_ids = ['65206241525']
+auto_reply_ids = ['65206241525', author_id]
 
 random_reply_messages = ["確實", "真的欸", "有料", "要", "超好笑", "笑死", "嗯嗯", "喔不", "哇嘞"]
 
@@ -30,6 +31,7 @@ def get_random_message():
     return message
     
 def update():
+    global pre_message
     current_message = get_latest_message(cl)
     if current_message == pre_message:
         return
@@ -37,7 +39,7 @@ def update():
         return
 
     if current_message.user_id == author_id:
-        if current_message.text.startswith("add"):
+        if current_message.text.startswith("add_user"):
             user_name = current_message.text.split()[1]
             user_id = cl.user_id_from_username(user_name)
             auto_reply_ids.append(user_id)
@@ -45,7 +47,7 @@ def update():
             print(auto_reply_ids)
             print()
 
-        elif current_message.text.startswith("remove"):
+        elif current_message.text.startswith("remove_user"):
             user_name = current_message.text.split()[1]
             user_id = cl.user_id_from_username(user_name)
             auto_reply_ids.remove(user_id)
@@ -75,22 +77,24 @@ def update():
                 reply_message = reply_message.split("id")[0]
                 user_id = int(reply_message.split("id")[1])
             cl.direct_send(reply_message, user_ids = [user_id])
+            cl.direct_send(f"回復訊息: {reply_message} 給 {user_name}", user_ids = [author_id])
             print("Reply with: ", reply_message)
             print()
 
         elif current_message.text.startswith("global_reply"):
             reply_message = current_message.text.split(" ", 1)[1]
+            cl.direct_send(f"廣播訊息: {reply_message} 給 {"、".join([cl.username_from_user_id(i) for i in auto_reply_ids])}", user_ids = [author_id])
             cl.direct_send(reply_message, user_ids = auto_reply_ids)
-            print("Reply with: ", reply_message)
+            print("Reply with: ", reply_message, "to: ", [cl.username_from_user_id(i) for i in auto_reply_ids])
         
         elif current_message.text.startswith("stop"):
             try:
                 delay_time = int(current_message.text.split(" ", 1)[1])
             except:
                 delay_time = 30
-            sleep(delay_time)
-            cl.direct_send(f"服務已暫停: {reply_message} 秒", user_ids = [author_id])
+            cl.direct_send(f"服務將暫停: {delay_time} 秒", user_ids = [author_id])
             print("Stop: ", delay_time)
+            sleep(delay_time)
 
         return
 
@@ -103,7 +107,8 @@ def update():
 
     print()
 
+print("Link Start")
 while True:
     update()
-    sleep(1)
+    sleep(0.5)
     
