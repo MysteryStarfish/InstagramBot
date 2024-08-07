@@ -68,8 +68,9 @@ def update():
             print()
         
         elif current_message.text.startswith("reply"):
-            reply_message = current_message.text.split(" ", 1)[1]
-            user_id = pre_message.user_id
+            user_name = current_message.text.split(" ", 2)[1]
+            reply_message = current_message.text.split(" ", 2)[2]
+            user_id = cl.user_id_from_username(user_name)
             if "id" in reply_message: 
                 reply_message = reply_message.split("id")[0]
                 user_id = int(reply_message.split("id")[1])
@@ -81,6 +82,15 @@ def update():
             reply_message = current_message.text.split(" ", 1)[1]
             cl.direct_send(reply_message, user_ids = auto_reply_ids)
             print("Reply with: ", reply_message)
+        
+        elif current_message.text.startswith("stop"):
+            try:
+                delay_time = int(current_message.text.split(" ", 1)[1])
+            except:
+                delay_time = 30
+            sleep(delay_time)
+            cl.direct_send(f"服務已暫停: {reply_message} 秒", user_ids = [author_id])
+            print("Stop: ", delay_time)
 
         return
 
