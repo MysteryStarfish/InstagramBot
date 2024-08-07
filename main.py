@@ -186,7 +186,7 @@ def get_auto_reply_message(message, user_id):
     end = random.choice(["", "啦", "~", "吧", "(X)", "耶", "欸", "咩"])
 
     func = ["+", "-", "*", "/", "(", ")"]
-    _b = ["True" if i in _msg else "" for i in func]
+    _b = ["True" if i in _msg.replace("×", "*").replace("÷", "/") else "" for i in func]
     str_num = [str(i) for i in range(10)]
 
     if _msg == "你是誰":
