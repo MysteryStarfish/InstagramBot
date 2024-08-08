@@ -235,4 +235,4 @@ def get_random_message():
 print("Link Start")
 while True:
     update()
-    sleep(0.5)
+    sleep(5)
