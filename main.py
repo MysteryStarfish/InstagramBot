@@ -179,7 +179,7 @@ def main(current_message):
 def get_auto_reply_message(message, user_id):
     _msg = message
     ask = ["會", "可以", "要", "能", "應該", "該","好笑", "好", "是", "對", "有趣", "有", "真的", "知道", "可愛", "喜歡", "討厭"]
-    _a = ["True" if i in _msg else "" for i in ask]
+    _a = ["True" if i in _msg else "" for i in ask] if _msg else [""]
     no = random.randint(0, 1)
     no = "不" if no else ""
     end = random.choice(["", "啦", "~", "吧", "(X)", "耶", "欸", "咩"])
